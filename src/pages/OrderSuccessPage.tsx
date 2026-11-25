@@ -1,0 +1,11 @@
+import { Link,useParams } from 'react-router-dom'
+import { Check } from 'lucide-react'
+import { useGlobalCartStore } from '../store/useGlobalCartStore'
+import { mockCatalog } from '../data/mockCatalog'
+import { formatCurrency } from '../lib/commerce'
+
+export default function OrderSuccessPage(){
+ const {orderId}=useParams(); const order=useGlobalCartStore(s=>s.orderHistory.find(o=>o.id===orderId))
+ if(!order)return <main className="grid min-h-[70vh] place-items-center px-4 text-center"><div><h1 className="text-3xl font-black">Receipt not found</h1><Link to="/" className="mt-5 inline-flex h-12 items-center rounded-full bg-cobalt px-6 text-sm font-black text-white">Continue shopping</Link></div></main>
+ return <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6"><div className="rounded-[28px] bg-graphite p-6 text-white sm:p-8"><div className="grid h-14 w-14 place-items-center rounded-full bg-emerald"><Check size={26}/></div><p className="mt-5 text-[10px] font-black uppercase tracking-[.18em] text-gold">Payment complete</p><h1 className="mt-2 text-3xl font-black">Order confirmed</h1><p className="mt-2 text-sm text-white/55">Tracking details are ready across your fulfillment shipments.</p><div className="mt-6 border-y border-white/10 py-5">{order.items.map(i=>{const p=mockCatalog.find(v=>v.id===i.productId); return p?<div key={i.productId} className="flex items-center justify-between py-2 text-sm"><span>{p.name}{i.sku?` · ${i.sku}`:''} × {i.quantity}</span><b>{formatCurrency((i.configuredPrice ?? p.basePriceUSD ?? p.price)*i.quantity,order.currency)}</b></div>:null})}</div><div className="mt-5 flex justify-between"><span className="text-white/55">Paid total</span><b className="text-2xl">{formatCurrency(order.total,order.currency)}</b></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{Object.entries(order.tracking).map(([hub,id])=><div key={hub} className="rounded-2xl border border-graphite/10 bg-white p-4"><p className="text-xs font-bold">{hub}</p><p className="mt-2 font-mono text-sm font-black text-cobalt">{id}</p></div>)}</div><Link to="/products" className="mt-6 flex h-12 items-center justify-center rounded-full bg-cobalt text-sm font-black text-white">Continue Shopping</Link></main>
+}
