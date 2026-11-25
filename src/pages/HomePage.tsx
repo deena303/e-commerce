@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Check, Clock3, Copy, Globe2, PackageCheck, ShieldCheck, SlidersHorizontal, Truck } from 'lucide-react'
-import HeroShowcaseBanner from '../components/HeroShowcaseBanner'
+import { ArrowRight, Check, Clock3, Copy, Globe2, ShieldCheck, SlidersHorizontal, Truck } from 'lucide-react'
+import DeviceProductHero from '@/components/ui/device-product-hero'
 import ProductCard from '../components/ProductCard'
 import QuickViewModal from '../components/QuickViewModal'
 import FilterDrawer, { type CatalogFilters } from '../components/FilterDrawer'
+import { featuredDevice } from '../data/featuredDevice'
 import { mockCatalog } from '../data/mockCatalog'
+import { fx } from '../lib/commerce'
+import { useGlobalCartStore } from '../store/useGlobalCartStore'
 import type { Product } from '../types'
 
 const defaultFilters: CatalogFilters = {
@@ -18,6 +21,7 @@ const defaultFilters: CatalogFilters = {
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const { addToCart, setCartOpen } = useGlobalCartStore()
   const [quick,setQuick]=useState<Product|null>(null)
   const [drawerOpen,setDrawerOpen]=useState(false)
   const [filters,setFilters]=useState<CatalogFilters>(defaultFilters)
@@ -28,10 +32,11 @@ export default function HomePage() {
     {label:'PC & GPU',param:'gpus',count:'24 Modules',image:'https://images.unsplash.com/photo-1587831990711-23ca6441447b?auto=format&fit=crop&w=900&q=85'},
     {label:'Audio & Peripherals',param:'audio',count:'18 Modules',image:'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=85'},
     {label:'Smart Displays',param:'displays',count:'12 Modules',image:'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=900&q=85'},
-    {label:'Modular Power',param:'power',count:'16 Modules',image:'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=900&q=85'}
+    {label:'Modular Power',param:'power',count:'16 Modules',image:'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=900&q=85'},
+    {label:'Mobile & Smart Devices',param:'mobile',count:'14 Modules',image:'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=85'}
   ]
 
-  const map:Record<string,string>={gpus:'Custom PCs & GPUs',audio:'Audio & Peripherals',displays:'Smart Displays',power:'Modular Power'}
+  const map:Record<string,string>={gpus:'Custom PCs & GPUs',audio:'Audio & Peripherals',displays:'Smart Displays',power:'Modular Power',mobile:'Mobile & Smart Devices'}
   let trending=category==='all'?mockCatalog:mockCatalog.filter((product)=>product.category===map[category])
   trending=trending.filter((product)=>
     (!filters.warehouses.length||filters.warehouses.some((origin)=>product.warehouse.startsWith(origin.split(' ')[0]))) &&
@@ -50,8 +55,27 @@ export default function HomePage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl space-y-14 px-4 pb-16 sm:px-6">
-      <HeroShowcaseBanner/>
+    <main className="mx-auto w-full min-w-0 max-w-7xl space-y-14 px-4 pb-16 sm:px-6">
+      <DeviceProductHero
+        product={featuredDevice}
+        onAddToCart={({ product, finish, specification, priceINR, quantity }) => {
+          const catalogProduct = mockCatalog.find((item) => item.id === product.id)
+          if (!catalogProduct) throw new Error(`Featured product "${product.id}" is missing from the catalog.`)
+          const configuredPriceUSD = priceINR / fx.INR
+          const storageOption = catalogProduct.specGroups.find((group) => group.name === 'Storage')?.options.find((option) => option.id === specification.id)
+          const finishOption = catalogProduct.specGroups.find((group) => group.name === 'Finish')?.options.find((option) => option.id === finish.id)
+          if (!storageOption || !finishOption) throw new Error('Featured device configuration is not available in the catalog.')
+          addToCart(
+            catalogProduct.id,
+            quantity,
+            `${finish.name} · ${specification.label}`,
+            configuredPriceUSD - catalogProduct.basePriceUSD,
+            `${catalogProduct.sku}${storageOption.skuSuffix}${finishOption.skuSuffix}`,
+            configuredPriceUSD
+          )
+          setCartOpen(true)
+        }}
+      />
 
       <section className="grid grid-cols-2 gap-6 rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm lg:grid-cols-4">
         {[
@@ -72,7 +96,7 @@ export default function HomePage() {
           <div><p className="text-[10px] font-black uppercase tracking-[.16em] text-cobalt">Hardware departments</p><h2 className="mt-1 text-2xl font-black tracking-tight text-graphite">Shop by Hardware Category</h2></div>
           <Link to="/products" className="flex items-center gap-2 text-xs font-black text-cobalt">View All Categories <ArrowRight size={14}/></Link>
         </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {categories.map((item)=>(
             <Link key={item.param} to={`/products?category=${item.param}`} className="group relative min-h-[280px] overflow-hidden rounded-3xl border border-transparent bg-graphite transition hover:border-cobalt">
               <img src={item.image} alt={item.label} className="absolute inset-0 h-full w-full object-cover opacity-75 transition duration-500 group-hover:scale-[1.04]"/>
@@ -93,7 +117,7 @@ export default function HomePage() {
         </div>
         <div className="mb-5 flex items-center gap-2 overflow-x-auto">
           <button onClick={()=>setDrawerOpen(true)} className="relative flex h-10 shrink-0 items-center gap-2 rounded-full bg-graphite px-4 text-xs font-black text-white"><SlidersHorizontal size={15} className="text-gold"/>Filters{activeFilterCount>0&&<span className="grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1 text-[10px] text-graphite">{activeFilterCount}</span>}</button>
-          {[['all','All'],['gpus','PC & GPU'],['audio','Audio'],['displays','Displays'],['power','Power']].map(([value,label])=>(
+          {[['all','All'],['gpus','PC & GPU'],['audio','Audio'],['displays','Displays'],['power','Power'],['mobile','Mobile']].map(([value,label])=>(
             <button key={value} onClick={()=>setCategory(value)} className={`h-10 shrink-0 rounded-full px-4 text-xs font-bold ${category===value?'bg-cobalt text-white':'border border-graphite/10 bg-white text-graphite'}`}>{label}</button>
           ))}
         </div>

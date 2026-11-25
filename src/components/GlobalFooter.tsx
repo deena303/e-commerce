@@ -14,7 +14,8 @@ const categoryLinks = [
   ['PC & GPU Systems','/products?category=PC%20%26%20GPU'],
   ['Audio & Peripherals','/products?category=Audio'],
   ['Smart Displays','/products?category=Displays'],
-  ['Modular Power','/products?category=Power']
+  ['Modular Power','/products?category=Power'],
+  ['Mobile & Smart Devices','/products?category=mobile']
 ] as const
 
 const fulfillmentLinks = [

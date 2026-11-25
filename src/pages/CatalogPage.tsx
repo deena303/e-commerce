@@ -15,7 +15,9 @@ const categoryMap: Record<string, string> = {
   displays: 'Smart Displays',
   Displays: 'Smart Displays',
   power: 'Modular Power',
-  Power: 'Modular Power'
+  Power: 'Modular Power',
+  mobile: 'Mobile & Smart Devices',
+  Mobile: 'Mobile & Smart Devices'
 }
 
 const defaultFilters: CatalogFilters = {
@@ -114,7 +116,7 @@ export default function CatalogPage() {
           {activeFilterCount > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1.5 text-[10px] text-graphite">{activeFilterCount}</span>}
         </button>
         <div className="scrollbar-hide flex min-w-0 flex-1 gap-2 overflow-x-auto">
-          {[['all','All'],['gpus','PC & GPU'],['audio','Audio'],['displays','Displays'],['power','Power']].map(([value,label]) => (
+          {[['all','All'],['gpus','PC & GPU'],['audio','Audio'],['displays','Displays'],['power','Power'],['mobile','Mobile']].map(([value,label]) => (
             <button key={value} onClick={() => selectCategory(value)} className={`h-9 shrink-0 rounded-full px-4 text-xs font-bold ${activeCategory === value ? 'bg-cobalt text-white' : 'border border-graphite/10 text-graphite hover:border-gold'}`}>{label}</button>
           ))}
         </div>

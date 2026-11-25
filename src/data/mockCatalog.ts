@@ -1,4 +1,6 @@
 import type { Product, ProductSpecGroup } from '../types'
+import { featuredDevice } from './featuredDevice'
+import { fx } from '../lib/commerce'
 
 type RawProduct = Omit<Product,'sku'|'basePriceUSD'|'specGroups'>
 
@@ -18,10 +20,15 @@ const rawProducts: RawProduct[] = [
   {id:'grid-core-1000',name:'GridCore 1000 PSU',brand:'GRIDCORE',category:'Modular Power',price:229,rating:4.8,reviews:633,warehouse:'North America Hub',weight:2.4,maxStock:22,expressEligible:true,image:'https://images.pexels.com/photos/2588757/pexels-photo-2588757.jpeg?auto=compress&cs=tinysrgb&w=800',images:['https://images.pexels.com/photos/2588757/pexels-photo-2588757.jpeg?auto=compress&cs=tinysrgb&w=800'],specs:['80+ Titanium','ATX 3.1','Native 12V-2x6']},
   {id:'volt-dock-96',name:'VoltDock 96 GaN Hub',brand:'VOLT',category:'Modular Power',price:179,rating:4.7,reviews:478,warehouse:'Asia-Pacific Hub',weight:.62,maxStock:30,expressEligible:true,image:'https://images.pexels.com/photos/4219861/pexels-photo-4219861.jpeg?auto=compress&cs=tinysrgb&w=800',images:['https://images.pexels.com/photos/4219861/pexels-photo-4219861.jpeg?auto=compress&cs=tinysrgb&w=800'],specs:['96W PD','3 USB-C','Dual 4K']},
   {id:'reserve-2k',name:'Reserve 2K Mobile Battery',brand:'RESERVE',category:'Modular Power',price:289,rating:4.6,reviews:344,warehouse:'EU Central Hub',weight:4.8,maxStock:11,expressEligible:true,image:'https://images.pexels.com/photos/518530/pexels-photo-518530.jpeg?auto=compress&cs=tinysrgb&w=800',images:['https://images.pexels.com/photos/518530/pexels-photo-518530.jpeg?auto=compress&cs=tinysrgb&w=800'],specs:['2048 Wh','LiFePO4','Solar input']},
-  {id:'raid-caddy',name:'RAID Caddy NVMe 8-Bay',brand:'RAIDON',category:'Modular Power',price:699,rating:4.5,reviews:81,warehouse:'Asia-Pacific Hub',weight:6.1,maxStock:6,expressEligible:false,image:'https://images.pexels.com/photos/325229/pexels-photo-325229.jpeg?auto=compress&cs=tinysrgb&w=800',images:['https://images.pexels.com/photos/325229/pexels-photo-325229.jpeg?auto=compress&cs=tinysrgb&w=800'],specs:['8x NVMe','80 Gbps','Silent cooling']}
+  {id:'raid-caddy',name:'RAID Caddy NVMe 8-Bay',brand:'RAIDON',category:'Modular Power',price:699,rating:4.5,reviews:81,warehouse:'Asia-Pacific Hub',weight:6.1,maxStock:6,expressEligible:false,image:'https://images.pexels.com/photos/325229/pexels-photo-325229.jpeg?auto=compress&cs=tinysrgb&w=800',images:['https://images.pexels.com/photos/325229/pexels-photo-325229.jpeg?auto=compress&cs=tinysrgb&w=800'],specs:['8x NVMe','80 Gbps','Silent cooling']},
+  {id:featuredDevice.id,name:featuredDevice.name,brand:featuredDevice.brand,category:'Mobile & Smart Devices',price:featuredDevice.specifications[0].priceINR/fx.INR,originalPrice:(featuredDevice.specifications[0].mrpINR??featuredDevice.specifications[0].priceINR)/fx.INR,rating:4.8,reviews:96,warehouse:'Asia-Pacific Hub',weight:.21,maxStock:18,expressEligible:true,image:featuredDevice.finishes[0].images[0].src,images:featuredDevice.finishes[0].images.map((view)=>view.src),specs:featuredDevice.highlights,badge:'New'}
 ]
 
 function specGroupsFor(product: RawProduct): ProductSpecGroup[] {
+  if (product.id === featuredDevice.id) return [
+    {name:'Storage',options:featuredDevice.specifications.map((spec)=>({id:spec.id,label:spec.label,priceDeltaUSD:(spec.priceINR-featuredDevice.specifications[0].priceINR)/fx.INR,skuSuffix:spec.skuSuffix,inStock:true}))},
+    {name:'Finish',options:featuredDevice.finishes.map((finish)=>({id:finish.id,label:finish.name,priceDeltaUSD:0,skuSuffix:finish.skuSuffix,inStock:true,imageOverride:finish.images[0].src}))}
+  ]
   if (product.category === 'Custom PCs & GPUs') return [
     {name:'Configuration Tier',options:[{id:'base',label:'Base configuration',priceDeltaUSD:0,skuSuffix:'-BASE',inStock:true},{id:'performance',label:'Performance tier (+$250)',priceDeltaUSD:250,skuSuffix:'-PERF',inStock:true},{id:'extreme',label:'Extreme tier (+$600)',priceDeltaUSD:600,skuSuffix:'-EXT',inStock:product.maxStock>3}]},
     {name:'Chassis Finish',options:[{id:'graphite',label:'Graphite finish',priceDeltaUSD:0,skuSuffix:'-GPH',inStock:true},{id:'gold',label:'Gold finish (+$40)',priceDeltaUSD:40,skuSuffix:'-GLD',inStock:true}]}
@@ -38,7 +45,7 @@ function specGroupsFor(product: RawProduct): ProductSpecGroup[] {
 
 export const mockCatalog: Product[] = rawProducts.map((product,index)=>({
   ...product,
-  sku:`MOD-${product.brand}-${String(index+1).padStart(3,'0')}`,
+  sku:product.id===featuredDevice.id?featuredDevice.sku:`MOD-${product.brand}-${String(index+1).padStart(3,'0')}`,
   basePriceUSD:product.price,
   specGroups:specGroupsFor(product)
 }))

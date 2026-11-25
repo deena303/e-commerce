@@ -22,7 +22,7 @@ export interface Product {
   sku: string
   basePriceUSD: number
   brand: string
-  category: 'Custom PCs & GPUs' | 'Audio & Peripherals' | 'Smart Displays' | 'Modular Power'
+  category: 'Custom PCs & GPUs' | 'Audio & Peripherals' | 'Smart Displays' | 'Modular Power' | 'Mobile & Smart Devices'
   price: number
   originalPrice?: number
   rating: number

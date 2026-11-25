@@ -12,7 +12,8 @@ const categories = [
   ['PC & GPU','gpus','Custom PCs & GPUs'],
   ['Audio & Peripherals','audio','Audio & Peripherals'],
   ['Smart Displays','displays','Smart Displays'],
-  ['Modular Power','power','Modular Power']
+  ['Modular Power','power','Modular Power'],
+  ['Mobile & Smart Devices','mobile','Mobile & Smart Devices']
 ] as const
 
 export default function GlobalMegaNavbar() {
@@ -66,11 +67,11 @@ export default function GlobalMegaNavbar() {
                 <PredictiveSearchBar compact/>
                 <div className="my-2 w-px bg-graphite/10"/>
                 <select value={searchCategory} onChange={(event)=>setSearchCategory(event.target.value)} aria-label="Search category" className="h-11 w-[118px] rounded-r-none bg-white px-2 text-xs font-bold text-graphite outline-none">
-                  {['All','PC & GPU','Audio','Displays','Power'].map((category)=><option key={category}>{category}</option>)}
+                  {['All','PC & GPU','Audio','Displays','Power','Mobile'].map((category)=><option key={category}>{category}</option>)}
                 </select>
               </div>
               <button onClick={()=>{
-                const mapping:Record<string,string>={All:'all', 'PC & GPU':'gpus',Audio:'audio',Displays:'displays',Power:'power'}
+                const mapping:Record<string,string>={All:'all', 'PC & GPU':'gpus',Audio:'audio',Displays:'displays',Power:'power',Mobile:'mobile'}
                 if(searchCategory==='All') navigate('/products')
                 else navigate(`/products?category=${mapping[searchCategory]}`)
               }} aria-label="Submit search" className="grid h-11 w-12 shrink-0 place-items-center rounded-r-full bg-gold text-graphite"><Search size={18}/></button>

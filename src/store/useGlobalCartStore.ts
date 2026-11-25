@@ -18,10 +18,10 @@ interface GlobalCartState {
   wishlist: string[]
   orderHistory: CompletedOrder[]
   addToCart: (productId: string, quantity?: number, variant?: string, priceDelta?: number, sku?: string, configuredPrice?: number) => void
-  updateQuantity: (productId: string, quantity: number) => void
-  removeFromCart: (productId: string) => void
-  saveForLater: (productId: string) => void
-  moveToCart: (productId: string) => void
+  updateQuantity: (productId: string, quantity: number, variant?: string) => void
+  removeFromCart: (productId: string, variant?: string) => void
+  saveForLater: (productId: string, variant?: string) => void
+  moveToCart: (productId: string, variant?: string) => void
   setRegionCurrency: (region: RegionCode, currency: CurrencyCode) => void
   setCoupon: (coupon: string | null) => void
   setShippingMethod: (warehouse: Warehouse, method: 'standard' | 'express') => void
@@ -49,8 +49,8 @@ export const useGlobalCartStore = create<GlobalCartState>()(persist((set, get) =
   savedItems: [],
   wishlist: [],
   orderHistory: [],
-  selectedRegion: 'US',
-  selectedCurrency: 'USD',
+  selectedRegion: 'IN',
+  selectedCurrency: 'INR',
   appliedCoupon: null,
   selectedShippingMethods: {
     'North America Hub': 'standard',
@@ -69,20 +69,37 @@ export const useGlobalCartStore = create<GlobalCartState>()(persist((set, get) =
       cartOpen: false
     }
   }),
-  updateQuantity: (productId, quantity) => set((state) => {
+  updateQuantity: (productId, quantity, variant) => set((state) => {
     const maxStock = mockCatalog.find((product) => product.id === productId)?.maxStock || quantity
     return { cartItems: state.cartItems.map((item) =>
-      item.productId === productId ? { ...item, quantity: Math.min(maxStock, Math.max(1, quantity)) } : item
+      item.productId === productId && (variant === undefined || item.variant === variant)
+        ? { ...item, quantity: Math.min(maxStock, Math.max(1, quantity)) }
+        : item
     )}
   }),
-  removeFromCart: (productId) => set((state) => ({ cartItems: state.cartItems.filter((item) => item.productId !== productId) })),
-  saveForLater: (productId) => set((state) => {
-    const item = state.cartItems.find((entry) => entry.productId === productId)
-    return item ? { cartItems: state.cartItems.filter((entry) => entry.productId !== productId), savedItems: [...state.savedItems, item] } : {}
+  removeFromCart: (productId, variant) => set((state) => ({
+    cartItems: state.cartItems.filter((item) => item.productId !== productId || (variant !== undefined && item.variant !== variant))
+  })),
+  saveForLater: (productId, variant) => set((state) => {
+    const item = state.cartItems.find((entry) => entry.productId === productId && (variant === undefined || entry.variant === variant))
+    return item ? {
+      cartItems: state.cartItems.filter((entry) => entry.productId !== productId || (variant !== undefined && entry.variant !== variant)),
+      savedItems: [...state.savedItems, item]
+    } : {}
   }),
-  moveToCart: (productId) => set((state) => {
-    const item = state.savedItems.find((entry) => entry.productId === productId)
-    return item ? { savedItems: state.savedItems.filter((entry) => entry.productId !== productId), cartItems: [...state.cartItems, item] } : {}
+  moveToCart: (productId, variant) => set((state) => {
+    const item = state.savedItems.find((entry) => entry.productId === productId && (variant === undefined || entry.variant === variant))
+    if (!item) return {}
+    const existing = state.cartItems.find((entry) => entry.productId === productId && entry.variant === item.variant)
+    const maxStock = mockCatalog.find((product) => product.id === productId)?.maxStock || item.quantity
+    return {
+      savedItems: state.savedItems.filter((entry) => entry.productId !== productId || (variant !== undefined && entry.variant !== variant)),
+      cartItems: existing
+        ? state.cartItems.map((entry) => entry.productId === productId && entry.variant === item.variant
+          ? { ...entry, quantity: Math.min(maxStock, entry.quantity + item.quantity) }
+          : entry)
+        : [...state.cartItems, item]
+    }
   }),
   setRegionCurrency: (selectedRegion, selectedCurrency) => set({ selectedRegion, selectedCurrency }),
   setCoupon: (appliedCoupon) => set({ appliedCoupon }),

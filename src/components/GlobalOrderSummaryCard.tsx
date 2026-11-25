@@ -4,7 +4,6 @@ import { formatCurrency, taxRates } from '../lib/commerce'
 
 export default function GlobalOrderSummaryCard({subtotal,compact=false}:{subtotal:number;compact?:boolean}) {
   const {selectedRegion,selectedCurrency,appliedCoupon,setCheckoutOpen}=useGlobalCartStore()
-  const uniqueWarehouses=new Set(useGlobalCartStore(s=>s.cartItems.map(i=>'North America Hub')).size)
   const shipping=subtotal>500?0:35
   const duty=subtotal*.035
   const discount=appliedCoupon==='GOLD15'?subtotal*.15:appliedCoupon==='VANTRO20'?subtotal*.20:0
